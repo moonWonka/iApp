@@ -16,7 +16,7 @@ Antes de ejecutar el proyecto, tener instaladas las siguientes dependencias y co
 Puedes instalar las dependencias ejecutando:
 
 ```bash
-pip install -r [requirements.txt](http://_vscodecontentref_/0)
+pip install -r requirements.txt
 
 
 ```
