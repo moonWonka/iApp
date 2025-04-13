@@ -1,22 +1,28 @@
-# Eva IA
+# 🧠 Eva IA
 
-Este proyecto contiene servicios para interactuar con modelos de lenguaje como OpenAI GPT-4 y Gemini, además de conectarse a bases de datos utilizando `pyodbc`.
+Eva IA es una aplicación modular en Python que permite:
 
-## Requisitos
+-   Realizar scraping de noticias desde múltiples fuentes.
+-   Almacenar artículos en una base de datos relacional.
+-   Procesar artículos usando modelos de lenguaje (ej. OpenAI GPT-4, Gemini).
+-   Enriquecer artículos con etiquetas, sentimiento, rating, riesgo, etc.
+-   Registrar las respuestas de IA y trazabilidad mediante logs.
 
-Antes de ejecutar el proyecto, tener instaladas las siguientes dependencias y configuraciones:
+---
 
-### Dependencias
+## 🚀 Requisitos
+
+Antes de ejecutar el proyecto, tener instalado:
+
+### 🐍 Dependencias
 
 -   Python 3.8 o superior
 -   `requests`
 -   `python-dotenv`
 -   `pyodbc`
 
-Puedes instalar las dependencias ejecutando:
+Instalar todo desde:
 
 ```bash
 pip install -r requirements.txt
-
-
 ```

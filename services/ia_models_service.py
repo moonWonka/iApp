@@ -1,19 +1,13 @@
 import requests
 import os
-from dotenv import load_dotenv
-
-# Cargar variables desde el archivo .env
-load_dotenv()
-#Token
-OPENAI_API_KEY = ""
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+from config.settings import GEMINI_API_KEY, OPENAI_API_KEY 
 
 class IAService:
 
     def __init__(self, prompt: str):
         self.prompt = prompt
 
-    def call_openAI(self, prompt: str):
+    def call_openAI(self, prompt: str):   
         """Realizar petición Modelo OPENAPI gpt-4o"""
         url: str = "https://api.openai.com/v1/responses"
         headers: dict[str, str] = {
@@ -71,5 +65,4 @@ class IAService:
         # Obtener el tiempo de respuesta
         response_time = response.elapsed.total_seconds()
         print(f"Tiempo de respuesta: {response_time:.2f} segundos")    
-        return response.json()
-
+        return response.json()                  
