@@ -3,7 +3,7 @@ from repository.connection import get_connection
 
 def insert_article(title: str, date: str, url: str, source: str, description: str, is_processed: int = 0) -> int | None:
     """
-    Inserta un artículo en la tabla PROCESSED.ARTICLES.
+    Inserta un artículo en la tabla PROCESO.PROCESSED_ARTICLES.
 
     Parámetros:
     - title: Título de la noticia o artículo.
@@ -22,20 +22,19 @@ def insert_article(title: str, date: str, url: str, source: str, description: st
     try:
         cursor = conn.cursor()
         query = """
-            INSERT INTO PROCESSED.ARTICLES (
-                TITLE,
-                DATE,
-                URL,
-                SOURCE,
-                DESCRIPTION,
-                IS_PROCESSED
-            ) VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO PROCESO.PROCESSED_ARTICLES (
+                TITULO, FECHA, URL, FUENTE, DESCRIPCION, IS_PROCESSED
+            )
+            OUTPUT INSERTED.ID
+            VALUES (?, ?, ?, ?, ?, ?)
         """
         cursor.execute(query, (title, date, url, source, description, is_processed))
+        inserted_id = cursor.fetchone()[0]
         conn.commit()
-        return cursor.lastrowid
+        return inserted_id
     except Exception as e:
         print("❌ Error al insertar artículo:", e)
+        return None
     finally:
         conn.close()
 
@@ -61,7 +60,7 @@ def get_articles_by_processed_status(processed_status: int) -> list[Article]:
                 ETIQUETAS_IA, SENTIMIENTO, RATING, NIVEL_RIESGO,
                 INDICADOR_VIOLENCIA, EDAD_RECOMENDADA,
                 MODEL_USED, EXECUTION_TIME, IS_PROCESSED
-            FROM PROCESSED.ARTICLES
+            FROM PROCESO.PROCESSED_ARTICLES
             WHERE IS_PROCESSED = ?
         """
         cursor.execute(query, (processed_status,))
