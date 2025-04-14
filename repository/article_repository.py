@@ -1,7 +1,7 @@
-from models.entities import Article
+from models.entities import Article, Noticia
 from repository.connection import get_connection
 
-def insert_article(title: str, date: str, url: str, source: str, description: str, is_processed: int = 0) -> int | None:
+def insert_article(noticia: Noticia) -> int | None:
     """
     Inserta un artículo en la tabla PROCESO.PROCESSED_ARTICLES.
 
@@ -28,7 +28,7 @@ def insert_article(title: str, date: str, url: str, source: str, description: st
             OUTPUT INSERTED.ID
             VALUES (?, ?, ?, ?, ?, ?)
         """
-        cursor.execute(query, (title, date, url, source, description, is_processed))
+        cursor.execute(query, (noticia.title, noticia.date, noticia.url, noticia.source, noticia.description, noticia.is_processed))
         inserted_id = cursor.fetchone()[0]
         conn.commit()
         return inserted_id
@@ -38,12 +38,12 @@ def insert_article(title: str, date: str, url: str, source: str, description: st
     finally:
         conn.close()
 
-def get_articles_by_processed_status(processed_status: int) -> list[Article]:
+def get_articles_by_processed_status(processed_status: bool) -> list[Article]:
     """
     Obtiene artículos filtrados por el campo IS_PROCESSED.
 
     Parámetros:
-    - processed_status: 0 para no procesados, 1 para procesados.
+    - processed_status: False para no procesados, True para procesados.
 
     Retorna:
     - Una lista de objetos Article con los artículos encontrados.
@@ -63,7 +63,8 @@ def get_articles_by_processed_status(processed_status: int) -> list[Article]:
             FROM PROCESO.PROCESSED_ARTICLES
             WHERE IS_PROCESSED = ?
         """
-        cursor.execute(query, (processed_status,))
+        # Convertir el booleano a entero para la consulta SQL (False -> 0, True -> 1)
+        cursor.execute(query, (int(processed_status),))
         rows = cursor.fetchall()
 
         return [
@@ -82,7 +83,7 @@ def get_articles_by_processed_status(processed_status: int) -> list[Article]:
                 edad_recomendada=row.EDAD_RECOMENDADA,
                 model_used=row.MODEL_USED,
                 execution_time=row.EXECUTION_TIME,
-                is_processed=row.IS_PROCESSED,
+                is_processed=bool(row.IS_PROCESSED),  # Convertir a booleano
             )
             for row in rows
         ]
