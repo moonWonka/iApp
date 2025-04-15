@@ -36,7 +36,6 @@ class IAService:
                 print("No se pudo decodificar la respuesta como JSON. Respuesta en texto:")
                 print(response.text)
 
-
     def call_gemini(self, prompt: str):
         # type: ignore
         url: str = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"

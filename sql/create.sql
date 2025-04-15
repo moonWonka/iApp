@@ -1,15 +1,13 @@
--- Eliminar tablas si existen
-IF OBJECT_ID('PROCESO.IA_RESPONSE_LOG', 'U') IS NOT NULL
-    DROP TABLE PROCESO.IA_RESPONSE_LOG;
-
-IF OBJECT_ID('PROCESO.PROCESSED_ARTICLES', 'U') IS NOT NULL
-    DROP TABLE PROCESO.PROCESSED_ARTICLES;
+-- Eliminar tablas si existen (en orden por dependencias)
+IF OBJECT_ID('PROCESO.ARTICLE_MODEL_STATUS', 'U') IS NOT NULL DROP TABLE PROCESO.ARTICLE_MODEL_STATUS;
+IF OBJECT_ID('PROCESO.IA_RESPONSE_LOG', 'U') IS NOT NULL DROP TABLE PROCESO.IA_RESPONSE_LOG;
+IF OBJECT_ID('PROCESO.PROCESSED_ARTICLES', 'U') IS NOT NULL DROP TABLE PROCESO.PROCESSED_ARTICLES;
 
 -- Eliminar esquema si existe
 IF EXISTS (SELECT * FROM sys.schemas WHERE name = 'PROCESO')
     DROP SCHEMA PROCESO;
 
--- Crear esquema
+-- Crear el esquema
 CREATE SCHEMA PROCESO;
 
 -- Crear tabla PROCESSED_ARTICLES
@@ -29,26 +27,23 @@ CREATE TABLE PROCESO.PROCESSED_ARTICLES (
     INDICADOR_VIOLENCIA VARCHAR(50) NULL,      -- Indicación si contiene violencia
     EDAD_RECOMENDADA VARCHAR(50) NULL,         -- Edad sugerida de lectura (+13, +18, etc.)
 
-    MODEL_USED VARCHAR(100) NULL,              -- Modelo IA utilizado para el análisis
     EXECUTION_TIME DATETIME NULL,              -- Fecha y hora del análisis
-
-    IS_PROCESSED BIT DEFAULT 0                 -- Indica si el artículo ya fue procesado (0 = no, 1 = sí)
 );
 
 -- Crear tabla IA_RESPONSE_LOG
 CREATE TABLE PROCESO.IA_RESPONSE_LOG (
-    ID INT IDENTITY PRIMARY KEY,               -- Identificador único de la respuesta IA
+    ID INT IDENTITY PRIMARY KEY,               -- Identificador único del log de IA
 
-    ARTICLE_ID INT NOT NULL,                   -- Referencia al artículo procesado
-    MODEL_NAME VARCHAR(100) NOT NULL,          -- Nombre del modelo de IA utilizado
+    ARTICLE_ID INT NOT NULL,                   -- ID del artículo procesado
+    MODEL_NAME VARCHAR(100) NOT NULL,          -- Nombre del modelo (ej: GPT-4, Gemini)
     PROMPT VARCHAR(MAX) NOT NULL,              -- Prompt o instrucción enviada a la IA
-    RESPONSE VARCHAR(MAX) NOT NULL,            -- Respuesta completa (JSON, errores, etc.)
-    FILTERED_RESPONSE VARCHAR(MAX) NULL,       -- Contenido útil extraído de la respuesta
-    STATUS_CODE INT NOT NULL,                  -- Código de estado (ej: 200, 500, etc.)
+    RESPONSE VARCHAR(MAX) NOT NULL,            -- Respuesta completa (puede incluir errores)
+    FILTERED_RESPONSE VARCHAR(MAX) NULL,       -- Respuesta filtrada o útil
+    STATUS_CODE INT NOT NULL,                  -- Código de estado HTTP u otro código relevante
 
     RESPONSE_TIME_SEC FLOAT NULL,              -- Tiempo de respuesta en segundos
-    TOKENS_USED INT NULL,                      -- Cantidad de tokens utilizados en la llamada
-    RESPONSE_DATE DATETIME DEFAULT GETDATE(),  -- Fecha y hora en que se recibió la respuesta
+    TOKENS_USED INT NULL,                      -- Tokens consumidos
+    RESPONSE_DATE DATETIME DEFAULT GETDATE(),  -- Fecha en que se registró la respuesta
 
     CONSTRAINT FK_Response_To_Article
         FOREIGN KEY (ARTICLE_ID)
@@ -57,12 +52,15 @@ CREATE TABLE PROCESO.IA_RESPONSE_LOG (
 );
 
 
+-- Crear tabla de control por modelo
+CREATE TABLE PROCESO.ARTICLE_MODEL_STATUS (
+    ID INT IDENTITY PRIMARY KEY,               -- ID único del registro
+    ARTICLE_ID INT NOT NULL,                   -- ID del artículo
+    MODEL VARCHAR(100) NOT NULL,               -- Nombre del modelo
+    IS_PROCESSED BIT DEFAULT 0,                -- 0 = pendiente, 1 = procesado
 
-
-
-
-
-
-
-
-
+    CONSTRAINT FK_ModelStatus_Article
+        FOREIGN KEY (ARTICLE_ID)
+        REFERENCES PROCESO.PROCESSED_ARTICLES(ID)
+        ON DELETE CASCADE
+);

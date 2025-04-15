@@ -25,10 +25,9 @@ class Article:
     edad_recomendada: str | None = None         # Edad sugerida de lectura (+13, +18, etc.)
     model_used: str | None = None               # Modelo IA utilizado para el análisis
     execution_time: str | None = None           # Fecha y hora del análisis (formato string)
-    is_processed: bool = False                  # Indica si fue procesado por IA
 
 @dataclass
-class IAResponseLog:
+class IALogModel:
     article_id: int                             # ID del artículo asociado (FK obligatoria)
     model: str                                  # Modelo IA utilizado
     status_code: int                            # Código HTTP
@@ -39,3 +38,19 @@ class IAResponseLog:
     execution_time: float | None = None         # Tiempo de respuesta en segundos
     tokens_used: int | None = None              # Tokens utilizados
     log_date: str | None = None                 # Fecha y hora del log (formato string)
+
+@dataclass
+class RespuestaIA:
+    """
+    Clase que modela la respuesta generada por el servicio de modelos de IA.
+    """
+    etiquetas_ia: str                          # Etiquetas generadas por IA (temas o categorías)
+    sentimiento: str                           # Sentimiento: positivo, negativo o neutro
+    rating: float                              # Evaluación subjetiva del artículo (escala 1.0 a 5.0)
+    nivel_riesgo: str                          # Nivel de riesgo estimado: bajo, medio o alto
+    indicador_violencia: bool                  # Indicación si contiene violencia
+    edad_recomendada: int                      # Edad sugerida de lectura (+13, +18, etc.)
+    model_used: str                            # Modelo IA utilizado para el análisis
+    execution_time: str                        # Fecha y hora del análisis (formato string)
+    status_code: int                           # Código HTTP para indicar el estado del procesamiento (200 = OK)
+    is_processed: bool                         # Indica si el artículo fue procesado correctamente
