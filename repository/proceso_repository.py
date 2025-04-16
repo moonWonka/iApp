@@ -1,4 +1,4 @@
-from models.entities import Article, Noticia, ProcessStatusDTO
+from models.entities import Article, Noticia, ProcessStatusDTO, IALogModel
 from repository.connection import get_connection
 from . import queries
 
@@ -136,6 +136,94 @@ def insertar_status(articulo_id: int, modelo: str, estado_procesado: bool) -> bo
     except Exception as e:
         print(f"❌ Error al insertar el estado del artículo ID {articulo_id} y modelo {modelo}:", e)
         return False
+    finally:
+        conn.close()
+
+def insertar_log(
+    article_id: int,
+    model_name: str,
+    prompt: str,
+    response: str,
+    status_code: int,
+    filtered_response: str | None = None,
+    response_time_sec: float | None = None,
+    tokens_used: int | None = None,
+    response_date: str | None = None
+) -> int | None:
+    """
+    Inserta un registro en la tabla de logs IA_RESPONSE_LOG.
+
+    Parámetros:
+    - article_id: ID del artículo asociado al log.
+    - model_name: Nombre del modelo de IA utilizado.
+    - prompt: Prompt enviado al modelo.
+    - response: Respuesta completa del modelo.
+    - filtered_response: Respuesta filtrada (opcional).
+    - status_code: Código de estado del procesamiento (ej. 200 para éxito, 500 para error).
+    - response_time_sec: Tiempo de respuesta en segundos (opcional).
+    - tokens_used: Número de tokens utilizados durante el procesamiento (opcional).
+    - response_date: Fecha y hora del log (formato string, opcional).
+
+    Retorna:
+    - El ID generado del registro insertado (int) o None si falló.
+    """
+    conn = get_connection()
+    if not conn:
+        return None
+    try:
+        cursor = conn.cursor()
+        cursor.execute(queries.INSERT_LOG, (
+            article_id,
+            model_name,
+            prompt,
+            response,
+            filtered_response,
+            status_code,
+            response_time_sec,
+            tokens_used,
+            response_date
+        ))
+        id_insertado = cursor.fetchone()[0]
+        conn.commit()
+        return id_insertado
+    except Exception as e:
+        print("❌ Error al insertar log:", e)
+        return None
+    finally:
+        conn.close()
+
+def insertar_log(log: IALogModel) -> int | None:
+    """
+    Inserta un registro en la tabla de logs IA_RESPONSE_LOG usando un objeto IALogModel.
+
+    Parámetros:
+    - log (IALogModel): Objeto con los datos del log.
+
+    Retorna:
+    - El ID generado del registro insertado (int) o None si falló.
+    """
+    conn = get_connection()
+    if not conn:
+        return None
+    try:
+        cursor = conn.cursor()
+        cursor.execute(queries.INSERT_LOG, (
+            log.article_id,
+            log.model,
+            log.prompt,
+            log.response,
+            log.filtered_response,
+            log.status_code,
+            log.response_time_sec,
+            log.tokens_used,
+            log.log_date.strftime("%Y-%m-%d %H:%M:%S") if log.log_date else None
+        ))
+        id_insertado = cursor.fetchone()[0]
+        conn.commit()
+        return id_insertado
+    except Exception as e:
+        print("❌ Error al insertar log:", e)
+        return None
     finally:
         conn.close()
 

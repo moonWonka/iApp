@@ -1,4 +1,4 @@
-from .article_repository import (
+from .proceso_repository import (
     insertar_articulo,
     obtener_articulos_por_estado,
     actualizar_datos_ia,

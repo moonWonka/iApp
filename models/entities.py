@@ -30,16 +30,15 @@ class Article:
 
 @dataclass
 class IALogModel:
-    article_id: int                             # ID del artículo asociado (FK obligatoria)
-    model: str                                  # Modelo IA utilizado
-    status_code: int                            # Código HTTP
-    response_text: str                          # Texto completo de la respuesta (con errores si los hay)
-
-    id: int | None = None                       # Identificador único del log
-    response: str | None = None                 # Respuesta útil filtrada
-    execution_time: float | None = None         # Tiempo de respuesta en segundos
-    tokens_used: int | None = None              # Tokens utilizados
-    log_date: datetime | None = None            # Fecha y hora del log
+    article_id: int
+    status_code: int
+    model: str
+    prompt: str
+    response: str
+    filtered_response: str | None = None
+    response_time_sec: float | None = None
+    tokens_used: int | None = None
+    log_date: datetime | None = None
 
 @dataclass
 class RespuestaIA:

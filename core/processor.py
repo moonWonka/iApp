@@ -1,14 +1,7 @@
 import pytz
-import time
 from datetime import datetime
 from models.entities import Article, Noticia, ProcessStatusDTO, IALogModel
-from repository.article_repository import (
-    actualizar_datos_ia,
-    insertar_articulo,
-    obtener_articulos_por_estado,
-    insertar_status,
-)
-from repository.log_respository import insertar_log
+import repository.proceso_repository as repository
 from services.scraping.scraping import extraer_noticias_elperiodico, extraer_noticias_araucaniadiario
 from services.file_export import guardar_en_csv, leer_desde_csv
 
@@ -39,10 +32,10 @@ def cargar_datos_a_db() -> None:
             url=noticia.url,
             fuente=noticia.fuente
         )
-        articulo_id = insertar_articulo(nueva_noticia)
+        articulo_id = repository.insertar_articulo(nueva_noticia)
         if articulo_id:
             for modelo in MODELOS:
-                insertar_status(articulo_id=articulo_id, modelo=modelo, estado_procesado=False)
+                repository.insertar_status(articulo_id=articulo_id, modelo=modelo, estado_procesado=False)
     print("Inserción de datos completada con éxito 🚀")
 
 def obtener_datos_de_db(modelo: str) -> list[Article]:
@@ -60,7 +53,7 @@ def obtener_datos_de_db(modelo: str) -> list[Article]:
         return []
 
     try:
-        articulos_modelo: list[Article] = obtener_articulos_por_estado(modelo=modelo, estado_procesado=False)
+        articulos_modelo: list[Article] = repository.obtener_articulos_por_estado(modelo=modelo, estado_procesado=False)
 
         if articulos_modelo:
             print(f"✅ Modelo: {modelo} - Artículos no procesados: {len(articulos_modelo)}")
@@ -84,8 +77,8 @@ def procesar_articulo_con_ia(articulo: Article) -> ProcessStatusDTO:
         sentimiento="positivo",
         rating=4.5,
         nivel_riesgo="bajo",
-        indicador_violencia=False,
-        edad_recomendada=18,
+        indicador_violencia="No",
+        edad_recomendada="18",
         model_used=articulo.model_name,
         execution_time="2025-04-14 10:00:00",
         status_code=200,
@@ -114,35 +107,40 @@ def procesar_con_modelo_ia(articulos_no_procesados: list[Article]) -> None:
             )
 
             if procesado_exitosamente:
-                actualizado = actualizar_datos_ia(articulo.id, resultado_ia)
+                actualizado = repository.actualizar_datos_ia(articulo.id, resultado_ia)
                 mensaje = "procesado y actualizado con éxito" if actualizado else "procesado, pero no se pudo actualizar en la base de datos"
                 print(f"✅ Artículo ID: {articulo.id} {mensaje}.")
             else:
                 print(f"⚠️ Procesamiento fallido para el artículo ID: {articulo.id}. Código de estado: {resultado_ia.status_code}")
 
-            # insertar_log(
-            #     articulo.id,
-            #     resultado_ia.model_used,
-            #     resultado_ia.status_code,
-            #     "Procesado correctamente" if resultado_ia.is_processed else "Error en el procesamiento",
-            #     resultado_ia.execution_time,
-            #     100,  # tokens_used simulado
-            #     datetime.now(TZ_SANTIAGO).strftime("%Y-%m-%d %H:%M:%S")
-            # )
+            log_entry = IALogModel(
+                article_id=articulo.id,
+                model=resultado_ia.model_used,
+                prompt="PROMPT SIMULADO",  # Reemplaza por el prompt real si lo tienes
+                response="RESPUESTA SIMULADA",  # Reemplaza por la respuesta real si la tienes
+                filtered_response=None,
+                status_code=resultado_ia.status_code,
+                response_time_sec=0.5,  # simulado
+                tokens_used=100,        # simulado
+                log_date=datetime.now(TZ_SANTIAGO)
+            )
+            repository.insertar_log(log_entry)
 
         except Exception as e:
             print(f"❌ Error al procesar el artículo ID: {articulo.id}: {e}")
-
-            # insertar_log(
-            #     articulo.id,
-            #     "Desconocido",
-            #     500,
-            #     f"Error: {str(e)}",
-            #     None,
-            #     None,
-            #     datetime.now(TZ_SANTIAGO).strftime("%Y-%m-%d %H:%M:%S")
-            # )
-
+            # Registrar el error en el log
+            log_entry = IALogModel(
+                article_id=articulo.id,
+                model=getattr(articulo, "model_name", "DESCONOCIDO"),
+                prompt="PROMPT SIMULADO",
+                response=f"ERROR: {str(e)}",
+                filtered_response=None,
+                status_code=500,
+                response_time_sec=None,
+                tokens_used=None,
+                log_date=datetime.now(TZ_SANTIAGO)
+            )
+            repository.insertar_log(log_entry)
             continue
 
     print("🚀 Procesamiento con modelo de IA completado.")
@@ -152,16 +150,16 @@ def procesar_datos() -> None:
     """
     Función principal para procesar datos desde periódicos y realizar operaciones en la base de datos.
     """
-    # # Obtener información de periódicos
-    # datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=100)
-    # datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=100)
+    # Obtener información de periódicos
+    datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=10)
+    datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=10)
 
-    # # Guardar información en CSV
-    # guardar_en_csv(datos_diario_a)
-    # guardar_en_csv(datos_diario_b, nombre_archivo="noticias2.csv")
+    # Guardar información en CSV
+    guardar_en_csv(datos_diario_a)
+    guardar_en_csv(datos_diario_b, nombre_archivo="noticias2.csv")
 
-    # # Cargar información hacia DB
-    # cargar_datos_a_db()
+    # Cargar información hacia DB
+    cargar_datos_a_db()
 
     # Procesar datos con modelos de IA por cada modelo
     for modelo in MODELOS:

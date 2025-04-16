@@ -63,3 +63,19 @@ ACTUALIZAR_STATUS = """
     SET IS_PROCESSED = ?
     WHERE ARTICLE_ID = ? AND MODEL_NAME = ?
 """
+
+INSERT_LOG = """
+    INSERT INTO PROCESO.IA_RESPONSE_LOG (
+        ARTICLE_ID,
+        MODEL_NAME,
+        PROMPT,
+        RESPONSE,
+        FILTERED_RESPONSE,
+        STATUS_CODE,
+        RESPONSE_TIME_SEC,
+        TOKENS_USED,
+        RESPONSE_DATE
+    )
+    OUTPUT INSERTED.ID
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+"""
