@@ -1,6 +1,6 @@
 import pytz
-from datetime import datetime
 import time
+from datetime import datetime
 from models.entities import Article, Noticia, RespuestaIA, IALogModel
 from repository.article_repository import actualizar_datos_ia, insertar_articulo, obtener_articulos_por_estado, insertar_status, actualizar_status
 from repository.log_respository import insertar_log
