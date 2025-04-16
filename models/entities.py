@@ -61,6 +61,8 @@ class ProcessStatusDTO:
     rating: float                    # Calificación subjetiva del artículo (escala 1.0 a 5.0)
     nivel_riesgo: str                # Nivel de riesgo estimado: bajo, medio o alto
     indicador_violencia: str         # Indicación si contiene violencia
+    status_code: int                 # Código HTTP
     edad_recomendada: str            # Edad sugerida de lectura (+13, +18, etc.)
     execution_time: str              # Fecha y hora del análisis (formato string)
     model_used: str                  # Nombre del modelo de IA utilizado
+    is_processed: bool

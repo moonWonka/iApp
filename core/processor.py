@@ -1,7 +1,7 @@
 import pytz
 import time
 from datetime import datetime
-from models.entities import Article, Noticia, ProcessStatusDTO, RespuestaIA, IALogModel
+from models.entities import Article, Noticia, ProcessStatusDTO, IALogModel
 from repository.article_repository import (
     actualizar_datos_ia,
     insertar_articulo,
@@ -74,12 +74,12 @@ def obtener_datos_de_db(modelo: str) -> list[Article]:
         return []
 
 
-def procesar_articulo_con_ia(articulo: Article) -> RespuestaIA:
+def procesar_articulo_con_ia(articulo: Article) -> ProcessStatusDTO:
     """
     Simula el procesamiento de un artículo con un modelo de IA.
     """
     # time.sleep(0.5)
-    return RespuestaIA(
+    return ProcessStatusDTO(
         etiquetas_ia="noticia, política",
         sentimiento="positivo",
         rating=4.5,
@@ -98,7 +98,7 @@ def procesar_con_modelo_ia(articulos_no_procesados: list[Article]) -> None:
     y registra los resultados en la tabla de logs.
     """
     if not articulos_no_procesados:
-        print("⚠️ No hay artículos no procesados para procesar.")
+        print("⚠️ No hay artículos para procesar.")
         return
 
     print(f"✅ Se encontraron {len(articulos_no_procesados)} artículos no procesados. Procesando con IA...")
