@@ -23,6 +23,8 @@ def obtener_articulos_por_estado(estado_procesado: bool, modelo: str) -> list[Ar
         cursor = conn.cursor()
         cursor.execute(queries.SELECT_ARTICULOS_POR_ESTADO, (modelo, int(estado_procesado)))
         filas = cursor.fetchall()
+        for fila in filas:
+            print(f"🔹 Fila obtenida: {fila}")
         return [
             Article(
                 id=fila.ID,
