@@ -11,7 +11,7 @@ class Noticia:
 
 @dataclass
 class Article:
-    id: int | None = None                       # Identificador único del artículo
+    id: int                                     # Identificador único del artículo
     titulo: str                                 # Título de la noticia
     fecha: str                                  # Fecha original de publicación
     url: str                                    # Enlace a la fuente original
@@ -53,3 +53,14 @@ class RespuestaIA:
     execution_time: str
     status_code: int
     is_processed: bool
+
+@dataclass
+class ProcessStatusDTO:
+    etiquetas_ia: str                # Etiquetas generadas por IA (temas o categorías)
+    sentimiento: str                 # Sentimiento detectado (positivo, negativo o neutro)
+    rating: float                    # Calificación subjetiva del artículo (escala 1.0 a 5.0)
+    nivel_riesgo: str                # Nivel de riesgo estimado: bajo, medio o alto
+    indicador_violencia: str         # Indicación si contiene violencia
+    edad_recomendada: str            # Edad sugerida de lectura (+13, +18, etc.)
+    execution_time: str              # Fecha y hora del análisis (formato string)
+    model_used: str                  # Nombre del modelo de IA utilizado

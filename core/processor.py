@@ -1,7 +1,7 @@
 import pytz
 import time
 from datetime import datetime
-from models.entities import Article, Noticia, RespuestaIA, IALogModel
+from models.entities import Article, Noticia, ProcessStatusDTO, RespuestaIA, IALogModel
 from repository.article_repository import (
     actualizar_datos_ia,
     insertar_articulo,
@@ -55,27 +55,30 @@ def obtener_datos_de_db(modelo: str) -> list[Article]:
     Retorna:
     - Una lista de objetos Article que no han sido procesados (IS_PROCESSED = False) para el modelo especificado.
     """
+    if modelo not in MODELOS:
+        print(f"⚠️ El modelo '{modelo}' no es válido. Modelos disponibles: {MODELOS}")
+        return []
+
     try:
-        if (modelo not in MODELOS):
-            print(f"⚠️ El modelo '{modelo}' no es válido. Modelos disponibles: {MODELOS}")
-            return []
         articulos_modelo: list[Article] = obtener_articulos_por_estado(modelo=modelo, estado_procesado=False)
-        if not articulos_modelo:
-            print(f"⚠️ No se encontraron artículos no procesados para el modelo '{modelo}'.")
-            return []
-        print(f"✅ Modelo: {modelo} - Artículos no procesados: {len(articulos_modelo)}")
-        for articulo in articulos_modelo:
-            print(f"  - ID: {articulo.id}, Título: {articulo.titulo}")
-        return articulos_modelo
+
+        if articulos_modelo:
+            print(f"✅ Modelo: {modelo} - Artículos no procesados: {len(articulos_modelo)}")
+            return articulos_modelo
+
+        print(f"⚠️ No se encontraron artículos no procesados para el modelo '{modelo}'.")
+        return []
+
     except Exception as e:
         print(f"❌ Error al obtener datos de la base de datos para el modelo '{modelo}': {e}")
         return []
+
 
 def procesar_articulo_con_ia(articulo: Article) -> RespuestaIA:
     """
     Simula el procesamiento de un artículo con un modelo de IA.
     """
-    time.sleep(0.5)
+    # time.sleep(0.5)
     return RespuestaIA(
         etiquetas_ia="noticia, política",
         sentimiento="positivo",
@@ -83,7 +86,7 @@ def procesar_articulo_con_ia(articulo: Article) -> RespuestaIA:
         nivel_riesgo="bajo",
         indicador_violencia=False,
         edad_recomendada=18,
-        model_used="GEMINI",
+        model_used=articulo.model_name,
         execution_time="2025-04-14 10:00:00",
         status_code=200,
         is_processed=True
@@ -102,37 +105,48 @@ def procesar_con_modelo_ia(articulos_no_procesados: list[Article]) -> None:
 
     for articulo in articulos_no_procesados:
         try:
+            print(articulo)
             print(f"🤖 Procesando artículo ID: {articulo.id}, Título: {articulo.titulo}...")
-            resultado_ia: RespuestaIA = procesar_articulo_con_ia(articulo)
-            if resultado_ia.status_code == 200 and resultado_ia.is_processed:
-                actualizar_datos_ia(articulo.id, resultado_ia.__dict__)
-                print(f"✅ Artículo ID: {articulo.id} procesado con éxito.")
+            resultado_ia: ProcessStatusDTO = procesar_articulo_con_ia(articulo)
+
+            procesado_exitosamente = (
+                resultado_ia.status_code == 200 and resultado_ia.is_processed
+            )
+
+            if procesado_exitosamente:
+                actualizado = actualizar_datos_ia(articulo.id, resultado_ia)
+                mensaje = "procesado y actualizado con éxito" if actualizado else "procesado, pero no se pudo actualizar en la base de datos"
+                print(f"✅ Artículo ID: {articulo.id} {mensaje}.")
             else:
                 print(f"⚠️ Procesamiento fallido para el artículo ID: {articulo.id}. Código de estado: {resultado_ia.status_code}")
 
-            insertar_log(
-                articulo.id,
-                resultado_ia.model_used,
-                resultado_ia.status_code,
-                "Procesado correctamente" if resultado_ia.is_processed else "Error en el procesamiento",
-                resultado_ia.execution_time,
-                100,  # tokens_used simulado
-                datetime.now(TZ_SANTIAGO).strftime("%Y-%m-%d %H:%M:%S")
-            )
+            # insertar_log(
+            #     articulo.id,
+            #     resultado_ia.model_used,
+            #     resultado_ia.status_code,
+            #     "Procesado correctamente" if resultado_ia.is_processed else "Error en el procesamiento",
+            #     resultado_ia.execution_time,
+            #     100,  # tokens_used simulado
+            #     datetime.now(TZ_SANTIAGO).strftime("%Y-%m-%d %H:%M:%S")
+            # )
+
         except Exception as e:
             print(f"❌ Error al procesar el artículo ID: {articulo.id}: {e}")
-            insertar_log(
-                articulo.id,
-                "Desconocido",
-                500,
-                f"Error: {str(e)}",
-                None,
-                None,
-                datetime.now(TZ_SANTIAGO).strftime("%Y-%m-%d %H:%M:%S")
-            )
+
+            # insertar_log(
+            #     articulo.id,
+            #     "Desconocido",
+            #     500,
+            #     f"Error: {str(e)}",
+            #     None,
+            #     None,
+            #     datetime.now(TZ_SANTIAGO).strftime("%Y-%m-%d %H:%M:%S")
+            # )
+
             continue
 
     print("🚀 Procesamiento con modelo de IA completado.")
+
 
 def procesar_datos() -> None:
     """

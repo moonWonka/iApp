@@ -1,4 +1,4 @@
-from models.entities import Article, Noticia
+from models.entities import Article, Noticia, ProcessStatusDTO
 from repository.connection import get_connection
 from . import queries
 
@@ -23,8 +23,6 @@ def obtener_articulos_por_estado(estado_procesado: bool, modelo: str) -> list[Ar
         cursor = conn.cursor()
         cursor.execute(queries.SELECT_ARTICULOS_POR_ESTADO, (modelo, int(estado_procesado)))
         filas = cursor.fetchall()
-        for fila in filas:
-            print(f"🔹 Fila obtenida: {fila}")
         return [
             Article(
                 id=fila.ID,
@@ -40,7 +38,8 @@ def obtener_articulos_por_estado(estado_procesado: bool, modelo: str) -> list[Ar
                 indicador_violencia=fila.INDICADOR_VIOLENCIA,
                 edad_recomendada=fila.EDAD_RECOMENDADA,
                 execution_time=fila.EXECUTION_TIME,
-                is_processed=bool(fila.IS_PROCESSED)
+                is_processed=bool(fila.IS_PROCESSED),
+                model_name=fila.MODEL_NAME
             )
             for fila in filas
         ]
@@ -140,21 +139,13 @@ def insertar_status(articulo_id: int, modelo: str, estado_procesado: bool) -> bo
     finally:
         conn.close()
 
-def actualizar_datos_ia(articulo_id: int, datos_ia: dict) -> bool:
+def actualizar_datos_ia(articulo_id: int, datos_ia: ProcessStatusDTO) -> bool:
     """
     Actualiza los datos generados por la IA en la tabla MODEL_PROCESS_STATUS.
 
     Parámetros:
     - articulo_id (int): ID del artículo.
-    - datos_ia (dict): Diccionario con los siguientes campos:
-        - etiquetas_ia (str): Etiquetas generadas por IA.
-        - sentimiento (str): Sentimiento detectado.
-        - rating (float): Calificación subjetiva.
-        - nivel_riesgo (str): Nivel de riesgo.
-        - indicador_violencia (str): Indicador de violencia.
-        - edad_recomendada (str): Edad recomendada.
-        - execution_time (str): Fecha/hora de ejecución.
-        - model_used (str): Nombre del modelo de IA.
+    - datos_ia (ProcessStatusDTO): Objeto con los datos a actualizar.
 
     Retorna:
     - bool: True si la actualización fue exitosa, False si hubo error.
@@ -165,15 +156,15 @@ def actualizar_datos_ia(articulo_id: int, datos_ia: dict) -> bool:
     try:
         cursor = conn.cursor()
         cursor.execute(queries.UPDATE_ARTICULO_IA, (
-            datos_ia["etiquetas_ia"],
-            datos_ia["sentimiento"],
-            datos_ia["rating"],
-            datos_ia["nivel_riesgo"],
-            datos_ia["indicador_violencia"],
-            datos_ia["edad_recomendada"],
-            datos_ia["execution_time"],
+            datos_ia.etiquetas_ia,
+            datos_ia.sentimiento,
+            datos_ia.rating,
+            datos_ia.nivel_riesgo,
+            datos_ia.indicador_violencia,
+            datos_ia.edad_recomendada,
+            datos_ia.execution_time,
             articulo_id,
-            datos_ia["model_used"]
+            datos_ia.model_used
         ))
         conn.commit()
         return True
