@@ -3,6 +3,5 @@ from .article_repository import (
     obtener_articulos_por_estado,
     actualizar_datos_ia,
     verificar_status_existente,
-    insertar_status,
-    actualizar_status
+    insertar_status
 )

@@ -52,7 +52,8 @@ UPDATE_ARTICULO_IA = """
         NIVEL_RIESGO = ?, 
         INDICADOR_VIOLENCIA = ?, 
         EDAD_RECOMENDADA = ?, 
-        EXECUTION_TIME = ?
+        EXECUTION_TIME = ?,
+        IS_PROCESSED = 1
     WHERE ARTICLE_ID = ? AND MODEL_NAME = ?
 """
 

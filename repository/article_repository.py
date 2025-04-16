@@ -138,33 +138,6 @@ def insertar_status(articulo_id: int, modelo: str, estado_procesado: bool) -> bo
     finally:
         conn.close()
 
-def actualizar_status(articulo_id: int, modelo: str, estado_procesado: bool) -> bool:
-    """
-    Actualiza el estado existente en MODEL_PROCESS_STATUS.
-
-    Parámetros:
-    - articulo_id (int): ID del artículo.
-    - modelo (str): Nombre del modelo de IA.
-    - estado_procesado (bool): True si ya fue procesado, False si no.
-
-    Retorna:
-    - bool: True si la actualización fue exitosa, False si hubo error.
-    """
-    conn = get_connection()
-    if not conn:
-        return False
-    try:
-        cursor = conn.cursor()
-        cursor.execute(queries.ACTUALIZAR_STATUS, (int(estado_procesado), articulo_id, modelo))
-        conn.commit()
-        print(f"🔄 Estado actualizado para el artículo ID {articulo_id} y modelo {modelo}.")
-        return True
-    except Exception as e:
-        print(f"❌ Error al actualizar el estado del artículo ID {articulo_id} y modelo {modelo}:", e)
-        return False
-    finally:
-        conn.close()
-
 def actualizar_datos_ia(articulo_id: int, datos_ia: dict) -> bool:
     """
     Actualiza los datos generados por la IA en la tabla MODEL_PROCESS_STATUS.
