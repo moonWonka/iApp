@@ -70,10 +70,10 @@ def obtener_datos_de_db(modelo: str) -> list[Article]:
 
 def procesar_articulo_con_ia(articulo: Article, modelo: str) -> ProcessStatusDTO:
     """
-    Simula el procesamiento de un artículo con un modelo de IA.
+    Procesa un artículo con un modelo de IA específico.
     """
-    # llamar al modelo de IA
-
+    # Crear el prompt para el modelo
+    print(f"articulo a procesar: '{articulo}'")
     titulo = articulo.titulo
     descripcion = articulo.descripcion
     prompt = f"""
@@ -86,31 +86,34 @@ def procesar_articulo_con_ia(articulo: Article, modelo: str) -> ProcessStatusDTO
     Devuelve tu respuesta en formato JSON respetando el siguiente esquema y sin ningún comentario adicional(un json limpio):
 
     {{
-    "etiquetas_ia": [ "etiqueta1", "etiqueta2", "..." ],
-    "sentimiento": "positivo | negativo | neutro",
-    "rating": "número_decimal_entre_1.0_y_5.0",
-    "nivel_riesgo": "bajo | medio | alto",
-    "indicador_violencia": "sí | no | moderado",
-    "edad_recomendada": "+13 | +18 | todo público"
+        "etiquetas_ia": [ "etiqueta1", "etiqueta2", "..." ],
+        "sentimiento": "positivo | negativo | neutro",
+        "rating": "número_decimal_entre_1.0_y_5.0_nivel_de_impacto",
+        "nivel_riesgo": "bajo | medio | alto",
+        "indicador_violencia": "sí | no | moderado",
+        "edad_recomendada": "+13 | +18 | todo público"
     }}
     """
 
+    # Crear instancia del servicio de IA
     modeloService = IAService(prompt=prompt)
-    data_procesada: IAProcessedData = modeloService.call_gemini()
 
-    response_data = ProcessStatusDTO(
-        status_code=200,
-        edad_recomendada=data_procesada.edad_recomendada,
-        etiquetas_ia=data_procesada.etiquetas_ia,
-        indicador_violencia=data_procesada.indicador_violencia,
-        rating=data_procesada.rating,
-        is_processed=1,
-        model_used=modelo,
-        nivel_riesgo=data_procesada.nivel_riesgo
-    )
+    # Diccionario para el switch
+    switch_modelos = {
+        "GEMINI": modeloService.call_gemini,
+        "OPENAI": modeloService.call_openAI,
+    }
 
-    # time.sleep(0.5)
-    return response_data
+    # Llamar al método correspondiente según el modelo
+    if modelo in switch_modelos:
+        data_procesada: ProcessStatusDTO = switch_modelos[modelo]()
+    else:
+        raise ValueError(f"Modelo '{modelo}' no soportado. Modelos disponibles: {list(switch_modelos.keys())}")
+
+    print("🤣🤣🤣")
+    print(data_procesada)
+
+    return data_procesada
 
 def procesar_con_modelo_ia(articulos_no_procesados: list[Article], modelo: str) -> None:
     """
@@ -178,15 +181,15 @@ def procesar_datos() -> None:
     Función principal para procesar datos desde periódicos y realizar operaciones en la base de datos.
     """
     # Obtener información de periódicos
-    datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=20)
-    datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=20)
+    #datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=20)
+    #datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=20)
 
     # Guardar información en CSV
-    guardar_en_csv(datos_diario_a)
-    guardar_en_csv(datos_diario_b, nombre_archivo="noticias2.csv")
+    #guardar_en_csv(datos_diario_a)
+    #guardar_en_csv(datos_diario_b, nombre_archivo="noticias2.csv")
 
     # Cargar información hacia DB
-    cargar_datos_a_db()
+    #cargar_datos_a_db()
 
     # Procesar datos con modelos de IA por cada modelo
     for modelo in MODELOS:

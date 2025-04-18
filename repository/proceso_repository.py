@@ -230,21 +230,18 @@ def insertar_log(log: IALogModel) -> int | None:
 def actualizar_datos_ia(articulo_id: int, datos_ia: ProcessStatusDTO) -> bool:
     """
     Actualiza los datos generados por la IA en la tabla MODEL_PROCESS_STATUS.
-
-    Parámetros:
-    - articulo_id (int): ID del artículo.
-    - datos_ia (ProcessStatusDTO): Objeto con los datos a actualizar.
-
-    Retorna:
-    - bool: True si la actualización fue exitosa, False si hubo error.
     """
     conn = get_connection()
     if not conn:
         return False
     try:
         cursor = conn.cursor()
+
+        # Convertir lista de etiquetas a string
+        etiquetas_str = ", ".join(datos_ia.etiquetas_ia) if isinstance(datos_ia.etiquetas_ia, list) else datos_ia.etiquetas_ia
+
         cursor.execute(queries.UPDATE_ARTICULO_IA, (
-            datos_ia.etiquetas_ia,
+            etiquetas_str,
             datos_ia.sentimiento,
             datos_ia.rating,
             datos_ia.nivel_riesgo,
@@ -261,3 +258,4 @@ def actualizar_datos_ia(articulo_id: int, datos_ia: ProcessStatusDTO) -> bool:
         return False
     finally:
         conn.close()
+

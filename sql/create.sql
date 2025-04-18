@@ -57,7 +57,7 @@ CREATE TABLE PROCESO.MODEL_PROCESS_STATUS (
     NIVEL_RIESGO VARCHAR(50) NULL,               -- Riesgo estimado: bajo, medio o alto
     INDICADOR_VIOLENCIA VARCHAR(50) NULL,        -- Sí o No
     EDAD_RECOMENDADA VARCHAR(50) NULL,           -- Edad sugerida (ej: +13, +18)
-    EXECUTION_TIME DATETIME NULL,                -- Tiempo de ejecución exitoso
+    EXECUTION_TIME VARCHAR(50) NULL,                -- Tiempo de ejecución exitoso
 
     CONSTRAINT FK_ModelStatus_Article FOREIGN KEY (ARTICLE_ID)
         REFERENCES PROCESO.PROCESSED_ARTICLES(ID)
