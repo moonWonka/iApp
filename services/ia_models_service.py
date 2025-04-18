@@ -103,18 +103,20 @@ class IAService:
             processed_data: IAProcessedData = json.loads(raw_text.strip("```json").strip())
 
             # Crear una instancia de IAProcessedData
-            return ProcessStatusDTO(
-                etiquetas_ia=processed_data.etiquetas_ia,
-                sentimiento=processed_data.sentimiento,
-                rating=float(processed_data.rating),
-                nivel_riesgo=processed_data.nivel_riesgo,
-                indicador_violencia=processed_data.indicador_violencia,
-                edad_recomendada=processed_data.edad_recomendada,
+            response = ProcessStatusDTO(
+                etiquetas_ia=processed_data["etiquetas_ia"],
+                sentimiento=processed_data["sentimiento"],
+                rating=float(processed_data["rating"]),
+                nivel_riesgo=processed_data["nivel_riesgo"],
+                indicador_violencia=processed_data["indicador_violencia"],
+                edad_recomendada=processed_data["edad_recomendada"],
                 is_processed=1,
                 execution_time=response_time,  # Tiempo en segundos con 2 decimales
                 status_code=response.status_code,
                 model_used="GEMINI"
             )
+            
+            return response
         else:
             print(f"Error en la petición: {response.status_code}")
             raise Exception(f"Error en la petición: {response.status_code}")

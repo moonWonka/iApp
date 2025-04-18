@@ -181,8 +181,8 @@ def procesar_datos() -> None:
     Función principal para procesar datos desde periódicos y realizar operaciones en la base de datos.
     """
     # Obtener información de periódicos
-    #datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=20)
-    #datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=20)
+    #datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=50)
+    #datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=50)
 
     # Guardar información en CSV
     #guardar_en_csv(datos_diario_a)
