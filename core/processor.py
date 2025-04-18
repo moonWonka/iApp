@@ -1,7 +1,8 @@
 import pytz
 from datetime import datetime
-from models.entities import Article, Noticia, ProcessStatusDTO, IALogModel
+from models.entities import Article, IAProcessedData, Noticia, ProcessStatusDTO, IALogModel
 import repository.proceso_repository as repository
+from services.ia_models_service import IAService
 from services.scraping.scraping import extraer_noticias_elperiodico, extraer_noticias_araucaniadiario
 from services.file_export import guardar_en_csv, leer_desde_csv
 
@@ -67,25 +68,51 @@ def obtener_datos_de_db(modelo: str) -> list[Article]:
         return []
 
 
-def procesar_articulo_con_ia(articulo: Article) -> ProcessStatusDTO:
+def procesar_articulo_con_ia(articulo: Article, modelo: str) -> ProcessStatusDTO:
     """
     Simula el procesamiento de un artículo con un modelo de IA.
     """
-    # time.sleep(0.5)
-    return ProcessStatusDTO(
-        etiquetas_ia="noticia, política",
-        sentimiento="positivo",
-        rating=4.5,
-        nivel_riesgo="bajo",
-        indicador_violencia="No",
-        edad_recomendada="18",
-        model_used=articulo.model_name,
-        execution_time="2025-04-14 10:00:00",
+    # llamar al modelo de IA
+
+    titulo = articulo.titulo
+    descripcion = articulo.descripcion
+    prompt = f"""
+    Analiza el siguiente artículo de prensa y completa estrictamente los siguientes campos en formato JSON:
+
+    Artículo:
+    "{titulo}"
+    "{descripcion}"
+
+    Devuelve tu respuesta en formato JSON respetando el siguiente esquema y sin ningún comentario adicional(un json limpio):
+
+    {{
+    "etiquetas_ia": [ "etiqueta1", "etiqueta2", "..." ],
+    "sentimiento": "positivo | negativo | neutro",
+    "rating": "número_decimal_entre_1.0_y_5.0",
+    "nivel_riesgo": "bajo | medio | alto",
+    "indicador_violencia": "sí | no | moderado",
+    "edad_recomendada": "+13 | +18 | todo público"
+    }}
+    """
+
+    modeloService = IAService(prompt=prompt)
+    data_procesada: IAProcessedData = modeloService.call_gemini()
+
+    response_data = ProcessStatusDTO(
         status_code=200,
-        is_processed=True
+        edad_recomendada=data_procesada.edad_recomendada,
+        etiquetas_ia=data_procesada.etiquetas_ia,
+        indicador_violencia=data_procesada.indicador_violencia,
+        rating=data_procesada.rating,
+        is_processed=1,
+        model_used=modelo,
+        nivel_riesgo=data_procesada.nivel_riesgo
     )
 
-def procesar_con_modelo_ia(articulos_no_procesados: list[Article]) -> None:
+    # time.sleep(0.5)
+    return response_data
+
+def procesar_con_modelo_ia(articulos_no_procesados: list[Article], modelo: str) -> None:
     """
     Procesa los artículos utilizando un modelo de IA, actualiza su estado en la base de datos
     y registra los resultados en la tabla de logs.
@@ -100,7 +127,7 @@ def procesar_con_modelo_ia(articulos_no_procesados: list[Article]) -> None:
         try:
             print(articulo)
             print(f"🤖 Procesando artículo ID: {articulo.id}, Título: {articulo.titulo}...")
-            resultado_ia: ProcessStatusDTO = procesar_articulo_con_ia(articulo)
+            resultado_ia: ProcessStatusDTO = procesar_articulo_con_ia(articulo, modelo)
 
             procesado_exitosamente = (
                 resultado_ia.status_code == 200 and resultado_ia.is_processed
@@ -151,8 +178,8 @@ def procesar_datos() -> None:
     Función principal para procesar datos desde periódicos y realizar operaciones en la base de datos.
     """
     # Obtener información de periódicos
-    datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=10)
-    datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=10)
+    datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=20)
+    datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=20)
 
     # Guardar información en CSV
     guardar_en_csv(datos_diario_a)
@@ -164,4 +191,4 @@ def procesar_datos() -> None:
     # Procesar datos con modelos de IA por cada modelo
     for modelo in MODELOS:
         articulos_no_procesados: list[Article] = obtener_datos_de_db(modelo)
-        procesar_con_modelo_ia(articulos_no_procesados)
+        procesar_con_modelo_ia(articulos_no_procesados, modelo)

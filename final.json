@@ -1,0 +1,19 @@
+{
+  "etiquetas_ia": [
+    "agresi\u00f3n",
+    "universidad",
+    "denuncia",
+    "paro",
+    "estrangulamiento",
+    "alumno",
+    "profesor",
+    "UFRO",
+    "investigaci\u00f3n",
+    "sanci\u00f3n"
+  ],
+  "sentimiento": "negativo",
+  "rating": 1.5,
+  "nivel_riesgo": "medio",
+  "indicador_violencia": "s\u00ed",
+  "edad_recomendada": "+13"
+}

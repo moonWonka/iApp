@@ -65,3 +65,12 @@ class ProcessStatusDTO:
     execution_time: str              # Fecha y hora del análisis (formato string)
     model_used: str                  # Nombre del modelo de IA utilizado
     is_processed: bool
+
+@dataclass
+class IAProcessedData:
+    etiquetas_ia: list[str]
+    sentimiento: str
+    rating: float
+    nivel_riesgo: str
+    indicador_violencia: str
+    edad_recomendada: str

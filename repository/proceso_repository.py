@@ -44,7 +44,7 @@ def obtener_articulos_por_estado(estado_procesado: bool, modelo: str) -> list[Ar
             for fila in filas
         ]
     except Exception as e:
-        print("❌ Error al obtener artículos:", e)
+        print("❌ Error al obtener artículos🚀🚀:", e)
         return []
     finally:
         conn.close()

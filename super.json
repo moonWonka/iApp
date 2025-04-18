@@ -1,0 +1,24 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "```json\n{\n  \"etiquetas_ia\": [\n    \"agresión\",\n    \"estrangulamiento\",\n    \"denuncia\",\n    \"universidad\",\n    \"profesor\",\n    \"alumno\",\n    \"UFRO\",\n    \"facultad de ingenieria y ciencias\",\n    \"paro estudiantil\"\n  ],\n  \"sentimiento\": \"negativo\",\n  \"rating\": \"1.5\",\n  \"nivel_riesgo\": \"medio\",\n  \"indicador_violencia\": \"sí\",\n  \"edad_recomendada\": \"+13\"\n}\n```"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "avgLogprobs": -0.08267581462860107
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 215,
+    "candidatesTokenCount": 136,
+    "totalTokenCount": 351,
+    "promptTokensDetails": [{ "modality": "TEXT", "tokenCount": 215 }],
+    "candidatesTokensDetails": [{ "modality": "TEXT", "tokenCount": 136 }]
+  },
+  "modelVersion": "gemini-2.0-flash"
+}
