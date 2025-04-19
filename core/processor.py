@@ -209,16 +209,16 @@ def analizar_métricas_desde_csv(nombre_archivo: str = "articulos_procesados.csv
         print("\n📊 Métricas Generales del CSV:")
         print(f"Total de artículos: {len(df)}")
         print("\n📰 Artículos por fuente:")
-        print(df['Fuente'].value_counts())
+        print(df['fuente'].value_counts())
 
         print("\n😊 Distribución de Sentimientos:")
-        print(df['Sentimiento'].value_counts())
+        print(df['sentimiento'].value_counts())
 
         print("\n⭐ Promedio de Rating por Fuente:")
-        print(df.groupby('Fuente')['Rating'].mean())
+        print(df.groupby('fuente')['rating'].mean())
 
         print("\n🔥 Nivel de Riesgo por frecuencia:")
-        print(df['Nivel de Riesgo'].value_counts())
+        print(df['nivel_riesgo'].value_counts())
 
     except Exception as e:
         print(f"❌ Error al analizar métricas desde el CSV: {e}")
@@ -246,5 +246,5 @@ def procesar_datos() -> None:
 
     # Llamar al método independiente para guardar los artículos procesados en un CSV
     guardar_articulos_procesados_en_csv()
-
+    analizar_métricas_desde_csv()
 
