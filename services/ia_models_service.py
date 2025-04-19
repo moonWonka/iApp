@@ -5,7 +5,8 @@ from models.entities import (
     ProcessStatusDTO,
     AnalisisResumenDTO,
     RiesgoEvaluacionDTO,
-    PropuestaAccionDTO
+    PropuestaAccionDTO,
+    TendenciasSentimientoDTO  # Importamos el nuevo DTO
 )
 
 class IAService:
@@ -129,6 +130,14 @@ class IAService:
                 acciones_recomendadas=data.get("acciones_recomendadas", []),
                 actores_clave=data.get("actores_clave", []),
                 tiempo_estimado=data.get("tiempo_estimado", "")
+            )
+        elif prompt_type == "tendencias_sentimiento":
+            return TendenciasSentimientoDTO(
+                titulo=data.get("titulo", "Análisis de Tendencias Emocionales"),
+                resumen=data.get("resumen", ""),
+                elementos_clave=data.get("elementos_clave", []),
+                posibles_implicaciones=data.get("posibles_implicaciones", []),
+                preguntas_pendientes=data.get("preguntas_pendientes", [])
             )
         else:
             raise ValueError(f"Tipo de prompt '{prompt_type}' no soportado.")

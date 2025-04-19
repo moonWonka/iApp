@@ -2,12 +2,52 @@
 
 # Opción 1: Análisis de Tendencias
 PROMPT_TENDENCIAS_SENTIMIENTO = """
-Analiza el siguiente conjunto de datos agregados de noticias:
-- Sentimientos detectados por IA (frecuencia):
-  positivo: {positivo}, negativo: {negativo}, neutro: {neutro}, neutral: {neutral}
+Analiza el siguiente conjunto de datos agregados extraídos de un análisis automatizado de noticias mediante inteligencia artificial.
 
-Con base en estos datos, describe cuál es la tendencia emocional predominante en las noticias.
-Incluye interpretación social o mediática que podría estar reflejando.
+Frecuencia de sentimientos detectados:
+- Positivo: {positivo}
+- Negativo: {negativo}
+- Neutro: {neutro}
+- Neutral: {neutral}
+
+Distribución de nivel de riesgo:
+- Bajo: {riesgo_bajo}
+- Medio: {riesgo_medio}
+- Alto: {riesgo_alto}
+
+Frecuencia de indicador de violencia:
+- Sí: {violencia_si}
+- No: {violencia_no}
+- Moderado: {violencia_moderado}
+
+Rating promedio asignado a las noticias: {rating_promedio}
+
+Promedio de edad sugerida para las noticias: {edad_promedio}
+
+A partir de estos datos, determina la **tendencia emocional predominante** en el corpus de noticias, considerando también el nivel de riesgo, la presencia de violencia, el impacto percibido a través del rating y la edad promedio sugerida.
+
+Tu respuesta debe entregarse en formato JSON limpio, utilizando la siguiente estructura:
+
+{{
+    "titulo": "Resumen de la tendencia emocional",
+    "resumen": "Explicación clara de la tendencia detectada basada en los datos agregados",
+    "elementos_clave": [
+        "Comparación significativa entre sentimientos",
+        "Presencia destacada de niveles de riesgo o violencia",
+        "Cualquier patrón llamativo encontrado",
+        "Edad promedio sugerida para las noticias"
+    ],
+    "posibles_implicaciones": [
+        "Impacto sobre la percepción social o mediática",
+        "Posibles cambios en la línea editorial",
+        "Consecuencias para la opinión pública o decisiones políticas"
+    ],
+    "preguntas_pendientes": [
+        "Pregunta relevante 1",
+        "Pregunta relevante 2",
+        "Pregunta relevante 3"
+    ]
+}}
 """
 
 # Opción 2: Resumen Ejecutivo Automático

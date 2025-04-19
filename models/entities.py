@@ -167,3 +167,19 @@ class PreguntasCriticasDTO:
       como distribución de sentimientos, niveles de riesgo y rating por fuente.
     """
     preguntas_clave: list[str]                 # Lista de preguntas clave generadas por IA
+
+
+@dataclass
+class TendenciasSentimientoDTO:
+    """
+    DTO para representar el análisis de tendencias emocionales generado por IA.
+
+    Relacionado con:
+    - PROMPT_TENDENCIAS_SENTIMIENTO: Analiza la tendencia emocional predominante en un conjunto de noticias,
+      considerando sentimientos, niveles de riesgo, violencia y rating promedio.
+    """
+    titulo: str                                 # Título del análisis de tendencias
+    resumen: str                                # Resumen generado por IA
+    elementos_clave: list[str]                 # Elementos clave identificados en el análisis
+    posibles_implicaciones: list[str]          # Implicaciones sociales o mediáticas
+    preguntas_pendientes: list[str]            # Preguntas clave generadas por IA

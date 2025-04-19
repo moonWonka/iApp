@@ -1,13 +1,13 @@
 import pytz
 import pandas as pd
 from datetime import datetime
-from models.entities import AnalisisResumenDTO, Article, IAProcessedData, Noticia, ProcessStatusDTO, IALogModel
+from models.entities import AnalisisResumenDTO, Article, IAProcessedData, Noticia, ProcessStatusDTO, IALogModel, TendenciasSentimientoDTO
 import repository.proceso_repository as repository
 from services.ia_models_service import IAService
 from services.scraping.scraping import extraer_noticias_elperiodico, extraer_noticias_araucaniadiario
 from services.file_export.csv_writer import guardar_articles_en_csv, guardar_noticias_en_csv
 from services.file_export import leer_desde_csv
-from core.prompts_analysis import PROMPT_ANALISIS_ARTICULO, PROMPT_COMPARATIVO_MEDIOS, PROMPT_RESUMEN_EJECUTIVO
+from core.prompts_analysis import PROMPT_ANALISIS_ARTICULO, PROMPT_COMPARATIVO_MEDIOS, PROMPT_RESUMEN_EJECUTIVO, PROMPT_TENDENCIAS_SENTIMIENTO
 
 # Constante para la zona horaria de América/Santiago
 TZ_SANTIAGO = pytz.timezone("America/Santiago")
@@ -31,7 +31,7 @@ def cargar_datos_a_db() -> None:
         print(f"Guardado noticia: {noticia.titulo}")
         nueva_noticia = Noticia(
             titulo=noticia.titulo,
-            fecha=fecha_hora_actual.strftime("%Y-%m-%d %H:%M:%S"),
+            fecha=noticia.fecha.strftime("%Y-%m-%d %H:%M:%S"),
             descripcion=noticia.descripcion,
             url=noticia.url,
             fuente=noticia.fuente
@@ -261,6 +261,83 @@ def generar_resumen_ejecutivo(modelo: str) -> None:
         print(f"❌ Error al generar el resumen ejecutivo: {e}")
 
 
+def generar_tendencias_sentimiento(modelo: str) -> None:
+    """
+    Genera un análisis de tendencias emocionales basado en los datos procesados y utiliza un modelo de IA para analizarlo.
+
+    Parámetros:
+    - modelo: Nombre del modelo de IA a utilizar ("OPENAI" o "GEMINI").
+    """
+    try:
+        # Leer los datos procesados desde el archivo CSV
+        nombre_archivo = "articulos_procesados.csv"
+        df = pd.read_csv(nombre_archivo)
+
+        # Preparar los datos para el prompt
+        positivo = df[df['sentimiento'] == 'positivo'].shape[0]
+        negativo = df[df['sentimiento'] == 'negativo'].shape[0]
+        neutro = df[df['sentimiento'] == 'neutro'].shape[0]
+        neutral = df[df['sentimiento'] == 'neutral'].shape[0]
+        riesgo_bajo = df[df['nivel_riesgo'] == 'bajo'].shape[0]
+        riesgo_medio = df[df['nivel_riesgo'] == 'medio'].shape[0]
+        riesgo_alto = df[df['nivel_riesgo'] == 'alto'].shape[0]
+        violencia_si = df[df['indicador_violencia'] == 'sí'].shape[0]
+        violencia_no = df[df['indicador_violencia'] == 'no'].shape[0]
+        violencia_moderado = df[df['indicador_violencia'] == 'moderado'].shape[0]
+        rating_promedio = df['rating'].mean()
+
+        # Calcular el promedio de edad sugerida
+        edades = df['edad_recomendada'].dropna()
+        edad_promedio = "+18" if "+18" in edades.values else "+13" if "+13" in edades.values else "todo público"
+
+        # Calcular el rango de fechas
+        df['fecha'] = pd.to_datetime(df['fecha'], errors='coerce')
+        fecha_minima = df['fecha'].min()
+        fecha_maxima = df['fecha'].max()
+        rango_fechas = f"{fecha_minima.strftime('%Y-%m-%d')} a {fecha_maxima.strftime('%Y-%m-%d')}" if pd.notnull(fecha_minima) and pd.notnull(fecha_maxima) else "No disponible"
+
+        # Crear el prompt para el análisis de tendencias emocionales
+        prompt = PROMPT_TENDENCIAS_SENTIMIENTO.format(
+            positivo=positivo,
+            negativo=negativo,
+            neutro=neutro,
+            neutral=neutral,
+            riesgo_bajo=riesgo_bajo,
+            riesgo_medio=riesgo_medio,
+            riesgo_alto=riesgo_alto,
+            violencia_si=violencia_si,
+            violencia_no=violencia_no,
+            violencia_moderado=violencia_moderado,
+            rating_promedio=rating_promedio,
+            edad_promedio=edad_promedio
+        )
+
+        print(f"\n📅 Rango de Fechas: {rango_fechas}")
+        print(prompt)
+
+        # Crear instancia del servicio de IA
+        modeloService = IAService(prompt=prompt)
+
+        # Llamar al modelo para generar el análisis de tendencias emocionales
+        if modelo == "OPENAI":
+            tendencias: TendenciasSentimientoDTO = modeloService.call_openAI(prompt_type="tendencias_sentimiento")
+        elif modelo == "GEMINI":
+            tendencias: TendenciasSentimientoDTO = modeloService.call_gemini(prompt_type="tendencias_sentimiento")
+        else:
+            raise ValueError(f"Modelo '{modelo}' no soportado. Modelos disponibles: {MODELOS}")
+
+        # Mostrar el análisis generado
+        print("\n📋 Análisis de Tendencias Emocionales Generado:")
+        print(f"Título: {tendencias.titulo}")
+        print(f"Resumen: {tendencias.resumen}")
+        print(f"Elementos Clave: {tendencias.elementos_clave}")
+        print(f"Posibles Implicaciones: {tendencias.posibles_implicaciones}")
+        print(f"Preguntas Pendientes: {tendencias.preguntas_pendientes}")
+
+    except Exception as e:
+        print(f"❌ Error al generar el análisis de tendencias emocionales: {e}")
+
+
 def procesar_datos() -> None:
     """
     Función principal para procesar datos desde periódicos y realizar operaciones en la base de datos.
@@ -285,5 +362,8 @@ def procesar_datos() -> None:
     # guardar_articulos_procesados_en_csv()
     analizar_métricas_desde_csv()
     for modelo in MODELOS:
-        generar_resumen_ejecutivo(modelo=modelo)
+        #generar_resumen_ejecutivo(modelo=modelo)
+        generar_tendencias_sentimiento(modelo=modelo)
+
+
 
