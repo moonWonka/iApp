@@ -21,3 +21,6 @@ __pycache__/
 # Archivos de sistema
 .DS_Store
 Thumbs.db
+
+# Ignorar checkpoints de Jupyter Notebook
+.ipynb_checkpoints/

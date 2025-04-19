@@ -4,3 +4,6 @@ pyodbc
 bs4
 pytz
 pandas
+jupyter
+matplotlib
+seaborn

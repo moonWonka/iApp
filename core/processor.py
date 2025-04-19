@@ -80,7 +80,7 @@ def procesar_articulo_con_ia(articulo: Article, modelo: str) -> ProcessStatusDTO
     Procesa un artículo con un modelo de IA específico.
     """
     # Crear el prompt para el modelo utilizando el prompt centralizado
-    print(f"articulo a procesar: '{articulo}'")
+    # print(f"articulo a procesar: '{articulo}'")
     titulo = articulo.titulo
     descripcion = articulo.descripcion
     prompt = PROMPT_ANALISIS_ARTICULO.format(titulo=titulo, descripcion=descripcion)
@@ -100,8 +100,8 @@ def procesar_articulo_con_ia(articulo: Article, modelo: str) -> ProcessStatusDTO
     else:
         raise ValueError(f"Modelo '{modelo}' no soportado. Modelos disponibles: {list(switch_modelos.keys())}")
 
-    print("🤣🤣🤣")
-    print(data_procesada)
+    # print("🤣🤣🤣")
+    # print(data_procesada)
 
     return data_procesada
 
@@ -119,7 +119,7 @@ def procesar_con_modelo_ia(articulos_no_procesados: list[Article], modelo: str) 
 
     for articulo in articulos_no_procesados:
         try:
-            print(articulo)
+            # print(articulo)
             print(f"🤖 Procesando artículo ID: {articulo.id}, Título: {articulo.titulo}...")
             resultado_ia: ProcessStatusDTO = procesar_articulo_con_ia(articulo, modelo)
 
@@ -313,7 +313,7 @@ def generar_tendencias_sentimiento(modelo: str) -> None:
         )
 
         print(f"\n📅 Rango de Fechas: {rango_fechas}")
-        print(prompt)
+        # print(prompt)
 
         # Crear instancia del servicio de IA
         modeloService = IAService(prompt=prompt)
