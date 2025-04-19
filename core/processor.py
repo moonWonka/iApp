@@ -343,23 +343,23 @@ def procesar_datos() -> None:
     Función principal para procesar datos desde periódicos y realizar operaciones en la base de datos.
     """
     # Obtener información de periódicos
-    # datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=50)
-    # datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=50)
+    datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=50)
+    datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=50)
 
     # Guardar información en CSV
-    # guardar_noticias_en_csv(datos_diario_a)
-    # guardar_noticias_en_csv(datos_diario_b, nombre_archivo="noticias2.csv")
+    guardar_noticias_en_csv(datos_diario_a)
+    guardar_noticias_en_csv(datos_diario_b, nombre_archivo="noticias2.csv")
 
     # Cargar información hacia DB
-    # cargar_datos_a_db()
+    cargar_datos_a_db()
 
     # Procesar datos con modelos de IA por cada modelo
-    # for modelo in MODELOS:
-    #     articulos_no_procesados: list[Article] = obtener_datos_de_db(modelo, False)
-    #     procesar_con_modelo_ia(articulos_no_procesados, modelo)
+    for modelo in MODELOS:
+        articulos_no_procesados: list[Article] = obtener_datos_de_db(modelo, False)
+        procesar_con_modelo_ia(articulos_no_procesados, modelo)
 
     # Llamar al método independiente para guardar los artículos procesados en un CSV
-    # guardar_articulos_procesados_en_csv()
+    guardar_articulos_procesados_en_csv()
     analizar_métricas_desde_csv()
     for modelo in MODELOS:
         #generar_resumen_ejecutivo(modelo=modelo)
