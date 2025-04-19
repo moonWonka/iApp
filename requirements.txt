@@ -3,3 +3,4 @@ python-dotenv
 pyodbc
 bs4
 pytz
+pandas

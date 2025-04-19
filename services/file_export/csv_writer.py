@@ -1,8 +1,8 @@
 import csv
-from models.entities import Noticia
+from models.entities import Noticia, Article
 import os
 
-def guardar_en_csv(noticias: list[Noticia], nombre_archivo: str = "noticias.csv"):
+def guardar_noticias_en_csv(noticias: list[Noticia], nombre_archivo: str = "noticias.csv"):
     """
     Guarda una lista de objetos Noticia en un archivo CSV.
 
@@ -23,7 +23,38 @@ def guardar_en_csv(noticias: list[Noticia], nombre_archivo: str = "noticias.csv"
                 noticia.url,
                 noticia.fuente
             ])
-    print(f"✅ Archivo guardado como: {nombre_archivo}")
+    print(f"✅ Archivo de noticias guardado como: {nombre_archivo}")
+
+
+def guardar_articles_en_csv(articulos: list[Article], nombre_archivo: str = "articulos.csv"):
+    """
+    Guarda una lista de objetos Article en un archivo CSV.
+
+    Parámetros:
+    - articulos: Lista de objetos Article a guardar.
+    - nombre_archivo: Nombre del archivo de salida. Por defecto "articulos.csv".
+
+    Crea el archivo en la ruta actual con columnas dinámicas basadas en los atributos de Article.
+    """
+    if not articulos:
+        print("⚠️ No hay artículos para guardar en el archivo CSV.")
+        return
+
+    # Obtener los nombres de los atributos de la clase Article
+    columnas = [attr for attr in dir(articulos[0]) if not callable(getattr(articulos[0], attr)) and not attr.startswith("__")]
+
+    with open(nombre_archivo, mode="w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file, delimiter=",")
+        
+        # Escribir las cabeceras del archivo CSV
+        writer.writerow(columnas)
+        
+        # Escribir los datos de cada artículo
+        for articulo in articulos:
+            writer.writerow([getattr(articulo, columna, "") for columna in columnas])
+    
+    print(f"✅ Archivo de artículos guardado como: {nombre_archivo}")
+
 
 def leer_desde_csv(nombre_archivo: str) -> list[Noticia]:
     """

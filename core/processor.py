@@ -1,10 +1,12 @@
 import pytz
+import pandas as pd
 from datetime import datetime
 from models.entities import Article, IAProcessedData, Noticia, ProcessStatusDTO, IALogModel
 import repository.proceso_repository as repository
 from services.ia_models_service import IAService
 from services.scraping.scraping import extraer_noticias_elperiodico, extraer_noticias_araucaniadiario
-from services.file_export import guardar_en_csv, leer_desde_csv
+from services.file_export.csv_writer import guardar_articles_en_csv, guardar_noticias_en_csv
+from services.file_export import leer_desde_csv
 
 # Constante para la zona horaria de América/Santiago
 TZ_SANTIAGO = pytz.timezone("America/Santiago")
@@ -39,28 +41,31 @@ def cargar_datos_a_db() -> None:
                 repository.insertar_status(articulo_id=articulo_id, modelo=modelo, estado_procesado=False)
     print("Inserción de datos completada con éxito 🚀")
 
-def obtener_datos_de_db(modelo: str) -> list[Article]:
+def obtener_datos_de_db(modelo: str, estado_procesado: bool) -> list[Article]:
     """
-    Obtiene artículos no procesados desde la base de datos para un modelo específico.
+    Obtiene artículos desde la base de datos para un modelo específico y un estado de procesamiento.
 
     Parámetros:
-    - modelo: Nombre del modelo de IA para el cual se buscarán artículos no procesados.
+    - modelo: Nombre del modelo de IA para el cual se buscarán artículos.
+    - estado_procesado: True para buscar artículos procesados, False para buscar artículos no procesados.
 
     Retorna:
-    - Una lista de objetos Article que no han sido procesados (IS_PROCESSED = False) para el modelo especificado.
+    - Una lista de objetos Article que cumplen con el estado de procesamiento especificado para el modelo.
     """
     if modelo not in MODELOS:
         print(f"⚠️ El modelo '{modelo}' no es válido. Modelos disponibles: {MODELOS}")
         return []
 
     try:
-        articulos_modelo: list[Article] = repository.obtener_articulos_por_estado(modelo=modelo, estado_procesado=False)
+        articulos_modelo: list[Article] = repository.obtener_articulos_por_estado(modelo=modelo, estado_procesado=estado_procesado)
 
         if articulos_modelo:
-            print(f"✅ Modelo: {modelo} - Artículos no procesados: {len(articulos_modelo)}")
+            estado_texto = "procesados" if estado_procesado else "no procesados"
+            print(f"✅ Modelo: {modelo} - Artículos {estado_texto}: {len(articulos_modelo)}")
             return articulos_modelo
 
-        print(f"⚠️ No se encontraron artículos no procesados para el modelo '{modelo}'.")
+        estado_texto = "procesados" if estado_procesado else "no procesados"
+        print(f"⚠️ No se encontraron artículos {estado_texto} para el modelo '{modelo}'.")
         return []
 
     except Exception as e:
@@ -176,22 +181,70 @@ def procesar_con_modelo_ia(articulos_no_procesados: list[Article], modelo: str) 
     print("🚀 Procesamiento con modelo de IA completado.")
 
 
+def guardar_articulos_procesados_en_csv() -> None:
+    """
+    Obtiene los artículos procesados para ambos modelos y los guarda en un archivo CSV.
+    """
+    print("🔄 Obteniendo artículos procesados para ambos modelos...")
+    articulos_procesados: list[Article] = []
+    for modelo in MODELOS:
+        articulos_procesados.extend(obtener_datos_de_db(modelo=modelo, estado_procesado=True))
+
+    # Escribir los datos procesados en un archivo CSV
+    if articulos_procesados:
+        print("✍️ Escribiendo artículos procesados en un archivo CSV...")
+        guardar_articles_en_csv(articulos_procesados, nombre_archivo="articulos_procesados.csv")
+        print("✅ Artículos procesados guardados en 'articulos_procesados.csv'.")
+    else:
+        print("⚠️ No se encontraron artículos procesados para guardar en el archivo CSV.")
+
+
+def analizar_métricas_desde_csv(nombre_archivo: str = "articulos_procesados.csv") -> None:
+    """
+    Carga los artículos procesados desde un archivo CSV y genera métricas de análisis.
+    """
+    try:
+        df = pd.read_csv(nombre_archivo)
+
+        print("\n📊 Métricas Generales del CSV:")
+        print(f"Total de artículos: {len(df)}")
+        print("\n📰 Artículos por fuente:")
+        print(df['Fuente'].value_counts())
+
+        print("\n😊 Distribución de Sentimientos:")
+        print(df['Sentimiento'].value_counts())
+
+        print("\n⭐ Promedio de Rating por Fuente:")
+        print(df.groupby('Fuente')['Rating'].mean())
+
+        print("\n🔥 Nivel de Riesgo por frecuencia:")
+        print(df['Nivel de Riesgo'].value_counts())
+
+    except Exception as e:
+        print(f"❌ Error al analizar métricas desde el CSV: {e}")
+
+
 def procesar_datos() -> None:
     """
     Función principal para procesar datos desde periódicos y realizar operaciones en la base de datos.
     """
     # Obtener información de periódicos
-    #datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=50)
-    #datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=50)
+    # datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=50)
+    # datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=50)
 
     # Guardar información en CSV
-    #guardar_en_csv(datos_diario_a)
-    #guardar_en_csv(datos_diario_b, nombre_archivo="noticias2.csv")
+    # guardar_noticias_en_csv(datos_diario_a)
+    # guardar_noticias_en_csv(datos_diario_b, nombre_archivo="noticias2.csv")
 
     # Cargar información hacia DB
-    #cargar_datos_a_db()
+    # cargar_datos_a_db()
 
     # Procesar datos con modelos de IA por cada modelo
-    for modelo in MODELOS:
-        articulos_no_procesados: list[Article] = obtener_datos_de_db(modelo)
-        procesar_con_modelo_ia(articulos_no_procesados, modelo)
+    # for modelo in MODELOS:
+    #     articulos_no_procesados: list[Article] = obtener_datos_de_db(modelo, False)
+    #     procesar_con_modelo_ia(articulos_no_procesados, modelo)
+
+    # Llamar al método independiente para guardar los artículos procesados en un CSV
+    guardar_articulos_procesados_en_csv()
+
+
