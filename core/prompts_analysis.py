@@ -23,7 +23,15 @@ Con base en las siguientes métricas extraídas de un conjunto de noticias anali
 {niveles_riesgo}
 
 Genera un resumen ejecutivo de estilo profesional que describa el comportamiento editorial observado.
-Incluye comentarios sobre estilo informativo, riesgo y posibles sesgos por fuente.
+Devuelve tu respuesta en formato JSON respetando el siguiente esquema y sin ningún comentario adicional (un JSON limpio):
+
+{{
+    "titulo": "Título del resumen ejecutivo",
+    "resumen": "Texto del resumen ejecutivo",
+    "elementos_clave": [ "elemento1", "elemento2", "..." ],
+    "posibles_implicaciones": [ "implicacion1", "implicacion2", "..." ],
+    "preguntas_pendientes": [ "pregunta1", "pregunta2", "..." ]
+}}
 """
 
 # Opción 3: Recomendación para Audiencia
@@ -64,4 +72,24 @@ El Periódico:
 - Nivel de riesgo más frecuente: {riesgo_periodico}
 
 Redacta un reporte comparativo sobre estilo editorial, tono y grado de riesgo en la información de cada fuente.
+"""
+
+# Opción 6: Análisis de Artículo Individual
+PROMPT_ANALISIS_ARTICULO = """
+Analiza el siguiente artículo de prensa y completa estrictamente los siguientes campos en formato JSON:
+
+Artículo:
+"{titulo}"
+"{descripcion}"
+
+Devuelve tu respuesta en formato JSON respetando el siguiente esquema y sin ningún comentario adicional(un json limpio):
+
+{{
+    "etiquetas_ia": [ "etiqueta1", "etiqueta2", "..." ],
+    "sentimiento": "positivo | negativo | neutro",
+    "rating": "número_decimal_entre_1.0_y_5.0_nivel_de_impacto",
+    "nivel_riesgo": "bajo | medio | alto",
+    "indicador_violencia": "sí | no | moderado",
+    "edad_recomendada": "+13 | +18 | todo público"
+}}
 """

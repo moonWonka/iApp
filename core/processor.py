@@ -1,12 +1,13 @@
 import pytz
 import pandas as pd
 from datetime import datetime
-from models.entities import Article, IAProcessedData, Noticia, ProcessStatusDTO, IALogModel
+from models.entities import AnalisisResumenDTO, Article, IAProcessedData, Noticia, ProcessStatusDTO, IALogModel
 import repository.proceso_repository as repository
 from services.ia_models_service import IAService
 from services.scraping.scraping import extraer_noticias_elperiodico, extraer_noticias_araucaniadiario
 from services.file_export.csv_writer import guardar_articles_en_csv, guardar_noticias_en_csv
 from services.file_export import leer_desde_csv
+from core.prompts_analysis import PROMPT_ANALISIS_ARTICULO, PROMPT_COMPARATIVO_MEDIOS, PROMPT_RESUMEN_EJECUTIVO
 
 # Constante para la zona horaria de América/Santiago
 TZ_SANTIAGO = pytz.timezone("America/Santiago")
@@ -40,6 +41,7 @@ def cargar_datos_a_db() -> None:
             for modelo in MODELOS:
                 repository.insertar_status(articulo_id=articulo_id, modelo=modelo, estado_procesado=False)
     print("Inserción de datos completada con éxito 🚀")
+
 
 def obtener_datos_de_db(modelo: str, estado_procesado: bool) -> list[Article]:
     """
@@ -77,28 +79,11 @@ def procesar_articulo_con_ia(articulo: Article, modelo: str) -> ProcessStatusDTO
     """
     Procesa un artículo con un modelo de IA específico.
     """
-    # Crear el prompt para el modelo
+    # Crear el prompt para el modelo utilizando el prompt centralizado
     print(f"articulo a procesar: '{articulo}'")
     titulo = articulo.titulo
     descripcion = articulo.descripcion
-    prompt = f"""
-    Analiza el siguiente artículo de prensa y completa estrictamente los siguientes campos en formato JSON:
-
-    Artículo:
-    "{titulo}"
-    "{descripcion}"
-
-    Devuelve tu respuesta en formato JSON respetando el siguiente esquema y sin ningún comentario adicional(un json limpio):
-
-    {{
-        "etiquetas_ia": [ "etiqueta1", "etiqueta2", "..." ],
-        "sentimiento": "positivo | negativo | neutro",
-        "rating": "número_decimal_entre_1.0_y_5.0_nivel_de_impacto",
-        "nivel_riesgo": "bajo | medio | alto",
-        "indicador_violencia": "sí | no | moderado",
-        "edad_recomendada": "+13 | +18 | todo público"
-    }}
-    """
+    prompt = PROMPT_ANALISIS_ARTICULO.format(titulo=titulo, descripcion=descripcion)
 
     # Crear instancia del servicio de IA
     modeloService = IAService(prompt=prompt)
@@ -106,7 +91,7 @@ def procesar_articulo_con_ia(articulo: Article, modelo: str) -> ProcessStatusDTO
     # Diccionario para el switch
     switch_modelos = {
         "GEMINI": modeloService.call_gemini,
-        "OPENAI": modeloService.call_openAI,
+        "OPENAI": modeloService.call_openAI,  # Método específico para ProcessStatusDTO
     }
 
     # Llamar al método correspondiente según el modelo
@@ -119,6 +104,7 @@ def procesar_articulo_con_ia(articulo: Article, modelo: str) -> ProcessStatusDTO
     print(data_procesada)
 
     return data_procesada
+
 
 def procesar_con_modelo_ia(articulos_no_procesados: list[Article], modelo: str) -> None:
     """
@@ -224,6 +210,57 @@ def analizar_métricas_desde_csv(nombre_archivo: str = "articulos_procesados.csv
         print(f"❌ Error al analizar métricas desde el CSV: {e}")
 
 
+def generar_resumen_ejecutivo(modelo: str) -> None:
+    """
+    Genera un resumen ejecutivo basado en los datos procesados y utiliza un modelo de IA para analizarlo.
+
+    Parámetros:
+    - modelo: Nombre del modelo de IA a utilizar ("OPENAI" o "GEMINI").
+    """
+    try:
+        # Leer los datos procesados desde el archivo CSV
+        nombre_archivo = "articulos_procesados.csv"
+        df = pd.read_csv(nombre_archivo)
+
+        # Preparar los datos para el prompt
+        distribucion_fuente = df['fuente'].value_counts().to_dict()
+        distribucion_sentimiento = df['sentimiento'].value_counts().to_dict()
+        rating_por_fuente = df.groupby('fuente')['rating'].mean().to_dict()
+        niveles_riesgo = df['nivel_riesgo'].value_counts().to_dict()
+
+        # Crear el prompt para el resumen ejecutivo
+        prompt = PROMPT_RESUMEN_EJECUTIVO.format(
+            distribucion_fuente=distribucion_fuente,
+            distribucion_sentimiento=distribucion_sentimiento,
+            rating_por_fuente=rating_por_fuente,
+            niveles_riesgo=niveles_riesgo
+        )
+
+        print(prompt)
+
+        # Crear instancia del servicio de IA
+        modeloService = IAService(prompt=prompt)
+
+        # Llamar al modelo para generar el resumen ejecutivo
+        if modelo == "OPENAI":
+            resumen: AnalisisResumenDTO = modeloService.call_openAI(prompt_type="resumen_ejecutivo")
+        elif modelo == "GEMINI":
+            resumen: AnalisisResumenDTO = modeloService.call_gemini(prompt_type="resumen_ejecutivo")
+        else:
+            raise ValueError(f"Modelo '{modelo}' no soportado. Modelos disponibles: {MODELOS}")
+
+        # Mostrar el resumen generado
+        print("\n📋 Resumen Ejecutivo Generado:")
+        print(f"Título: {resumen.titulo}")
+        print(f"Resumen: {resumen.resumen}")
+        print(f"Elementos Clave: {resumen.elementos_clave}")
+        print(f"Posibles Implicaciones: {resumen.posibles_implicaciones}")
+        print(f"Preguntas Pendientes: {resumen.preguntas_pendientes}")
+
+    except Exception as e:
+        print(f"❌ Error al generar el resumen ejecutivo: {e}")
+
+
 def procesar_datos() -> None:
     """
     Función principal para procesar datos desde periódicos y realizar operaciones en la base de datos.
@@ -245,6 +282,8 @@ def procesar_datos() -> None:
     #     procesar_con_modelo_ia(articulos_no_procesados, modelo)
 
     # Llamar al método independiente para guardar los artículos procesados en un CSV
-    guardar_articulos_procesados_en_csv()
+    # guardar_articulos_procesados_en_csv()
     analizar_métricas_desde_csv()
+    for modelo in MODELOS:
+        generar_resumen_ejecutivo(modelo=modelo)
 
