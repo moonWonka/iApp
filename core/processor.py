@@ -31,7 +31,7 @@ def cargar_datos_a_db() -> None:
         print(f"Guardado noticia: {noticia.titulo}")
         nueva_noticia = Noticia(
             titulo=noticia.titulo,
-            fecha=noticia.fecha.strftime("%Y-%m-%d %H:%M:%S"),
+            fecha=noticia.fecha,
             descripcion=noticia.descripcion,
             url=noticia.url,
             fuente=noticia.fuente
@@ -80,7 +80,7 @@ def procesar_articulo_con_ia(articulo: Article, modelo: str) -> ProcessStatusDTO
     Procesa un artículo con un modelo de IA específico.
     """
     # Crear el prompt para el modelo utilizando el prompt centralizado
-    # print(f"articulo a procesar: '{articulo}'")
+# print(f"articulo a procesar: '{articulo}'")
     titulo = articulo.titulo
     descripcion = articulo.descripcion
     prompt = PROMPT_ANALISIS_ARTICULO.format(titulo=titulo, descripcion=descripcion)
@@ -91,16 +91,15 @@ def procesar_articulo_con_ia(articulo: Article, modelo: str) -> ProcessStatusDTO
     # Diccionario para el switch
     switch_modelos = {
         "GEMINI": modeloService.call_gemini,
-        "OPENAI": modeloService.call_openAI,  # Método específico para ProcessStatusDTO
+        "OPENAI": modeloService.call_openAI,
     }
 
     # Llamar al método correspondiente según el modelo
     if modelo in switch_modelos:
-        data_procesada: ProcessStatusDTO = switch_modelos[modelo]()
+        data_procesada: ProcessStatusDTO = switch_modelos[modelo]("procesamiento_articulo")
     else:
         raise ValueError(f"Modelo '{modelo}' no soportado. Modelos disponibles: {list(switch_modelos.keys())}")
 
-    # print("🤣🤣🤣")
     # print(data_procesada)
 
     return data_procesada
@@ -342,16 +341,16 @@ def procesar_datos() -> None:
     """
     Función principal para procesar datos desde periódicos y realizar operaciones en la base de datos.
     """
-    # Obtener información de periódicos
-    datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=50)
-    datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=50)
+    # # Obtener información de periódicos
+    # datos_diario_a: list[Noticia] = extraer_noticias_araucaniadiario(max_articulos=50)
+    # datos_diario_b: list[Noticia] = extraer_noticias_elperiodico(max_articulos=50)
 
-    # Guardar información en CSV
-    guardar_noticias_en_csv(datos_diario_a)
-    guardar_noticias_en_csv(datos_diario_b, nombre_archivo="noticias2.csv")
+    # # Guardar información en CSV
+    # guardar_noticias_en_csv(datos_diario_a)
+    # guardar_noticias_en_csv(datos_diario_b, nombre_archivo="noticias2.csv")
 
     # Cargar información hacia DB
-    cargar_datos_a_db()
+    # cargar_datos_a_db()
 
     # Procesar datos con modelos de IA por cada modelo
     for modelo in MODELOS:
